@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-good
+  namespace: default
+  labels:
+    app: demo
+    team: core
+    owner: alice
+spec:
+  containers:
+    - name: app
+      image: nginx:1.25
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-app
+  namespace: default
+  labels:
+    app: demo
+spec:
+  containers:
+    - name: app
+      image: nginx:1.25
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-latest
+  namespace: default
+  labels:
+    app: demo
+    team: core
+    owner: alice
+spec:
+  containers:
+    - name: app
+      image: nginx:latest
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-bad
+  namespace: default
+spec:
+  containers:
+    - name: app
+      image: busybox:1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-map
+  namespace: default
+data:
+  key: value

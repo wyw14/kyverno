@@ -1,0 +1,47 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: test-policy
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: require-labels
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "pods must carry app and team labels"
+        pattern:
+          metadata:
+            labels:
+              app: "?*"
+              team: "?*"
+    # renamed from disallow-latest: must surface as a removal and an addition
+    - name: disallow-latest-image
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "the nginx:latest image is not allowed"
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.containers[0].image }}"
+                operator: Equals
+                value: "nginx:latest"
+    - name: require-owner
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "pods must carry an owner label"
+        pattern:
+          metadata:
+            labels:
+              owner: "?*"

@@ -5,6 +5,7 @@ import (
 	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/commands/apply"
 	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/commands/completion"
 	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/commands/create"
+	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/commands/diff"
 	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/commands/docs"
 	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/commands/fix"
 	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/commands/jp"
@@ -39,6 +40,7 @@ func RootCommand(experimental bool) *cobra.Command {
 	)
 	if experimental {
 		cmd.AddCommand(
+			diff.Command(),
 			fix.Command(),
 			oci.Command(),
 		)

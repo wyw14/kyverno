@@ -46,6 +46,7 @@ kyverno [flags]
 * [kyverno apply](kyverno_apply.md)	 - Applies policies on resources.
 * [kyverno completion](kyverno_completion.md)	 - Generate the autocompletion script for kyverno for the specified shell.
 * [kyverno create](kyverno_create.md)	 - Helps with the creation of various Kyverno resources.
+* [kyverno diff](kyverno_diff.md)	 - Compare validate rule results of two policy sets against the same resources.
 * [kyverno docs](kyverno_docs.md)	 - Generates reference documentation.
 * [kyverno fix](kyverno_fix.md)	 - Fix inconsistencies and deprecated usage of Kyverno resources.
 * [kyverno jp](kyverno_jp.md)	 - Provides a command-line interface to JMESPath, enhanced with Kyverno specific custom functions.

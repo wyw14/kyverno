@@ -23,6 +23,15 @@ func policyHasValidateOrVerifyImageChecks(policy kyvernov1.PolicyInterface) bool
 	return false
 }
 
+func policyHasValidateRules(policy kyvernov1.PolicyInterface) bool {
+	for _, rule := range policy.GetSpec().Rules {
+		if rule.HasValidate() {
+			return true
+		}
+	}
+	return false
+}
+
 func NewContextProvider(dclient dclient.Interface, restMapper meta.RESTMapper, f billy.Filesystem, contextPath string, registryAccess bool, isFake bool, globalContextEntries map[string]interface{}, httpMockIndex map[string]interface{}) (libs.Context, error) {
 	if dclient != nil && !isFake {
 		kubeClient := dclient.GetKubeClient()

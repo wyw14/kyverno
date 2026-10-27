@@ -1,0 +1,21 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: eval-error-policy
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: runtime-type-error
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "a JMESPath type error at runtime must surface as an evaluation error"
+        deny:
+          conditions:
+            any:
+              - key: "{{ max(request.object.metadata.labels) }}"
+                operator: Equals
+                value: "x"

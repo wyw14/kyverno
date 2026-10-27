@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -23,6 +24,10 @@ func main() {
 		case apply.WarnExitCodeError:
 			os.Exit(e.ExitCode)
 		default:
+			var exitCoder interface{ ExitCode() int }
+			if errors.As(err, &exitCoder) {
+				os.Exit(exitCoder.ExitCode())
+			}
 			os.Exit(1)
 		}
 	}

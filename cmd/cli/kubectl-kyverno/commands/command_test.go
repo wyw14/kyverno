@@ -20,7 +20,7 @@ func TestRootCommand(t *testing.T) {
 func TestRootCommandExperimental(t *testing.T) {
 	cmd := RootCommand(true)
 	assert.NotNil(t, cmd)
-	assert.Len(t, cmd.Commands(), 11)
+	assert.Len(t, cmd.Commands(), 12)
 	err := cmd.Execute()
 	assert.NoError(t, err)
 }

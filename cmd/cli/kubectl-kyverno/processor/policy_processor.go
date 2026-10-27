@@ -791,6 +791,86 @@ func (p *PolicyProcessor) ApplyPoliciesOnResource() ([]engineapi.EngineResponse,
 	return responses, nil
 }
 
+// ApplyValidatePoliciesOnResource evaluates only the validate rules of the Kyverno policies
+// against p.Resource, without running mutation, image verification or generation first.
+// Every side of a comparison therefore starts from the same unmodified resource snapshot.
+// Like the full processor, rules that are not selected for the resource produce no engine
+// response and must be interpreted as "skip" by the caller.
+func (p *PolicyProcessor) ApplyValidatePoliciesOnResource() ([]engineapi.EngineResponse, error) {
+	if len(p.CrdPaths) > 0 {
+		if err := p.loadCrds(); err != nil {
+			return nil, err
+		}
+	}
+	cfg := config.NewDefaultConfiguration(false)
+	jp := jmespath.New(cfg)
+	resource := p.Resource
+	namespaceLabels := p.NamespaceSelectorMap[resource.GetNamespace()]
+	if p.NamespaceCache == nil {
+		p.NamespaceCache = make(map[string]*unstructured.Unstructured)
+	}
+	policyExceptionLister := &policyExceptionLister{
+		exceptions: p.PolicyExceptions,
+	}
+	var client engineapi.Client
+	if p.Client != nil {
+		client = adapters.Client(p.Client)
+	}
+	rclient := p.Store.GetRegistryClient()
+	if rclient == nil {
+		rclient = registryclient.New()
+	}
+	isCluster := false
+	eng := engine.NewEngine(
+		cfg,
+		jmespath.New(cfg),
+		client,
+		factories.DefaultRegistryClientFactory(adapters.RegistryClient(rclient), nil),
+		imageverifycache.DisabledImageVerifyCache(),
+		store.ContextLoaderFactory(p.Store, p.ConfigMapResolver),
+		exceptions.New(policyExceptionLister),
+		&isCluster,
+	)
+	gvk := resource.GroupVersionKind()
+	subresource := ""
+	// Resolve the top level GVK when the resource is a declared subresource,
+	// mirroring the local (non cluster) branch of ApplyPoliciesOnResource.
+	if !p.Cluster {
+		for _, s := range p.Subresources {
+			subgvk := schema.GroupVersionKind{
+				Group:   s.Subresource.Group,
+				Version: s.Subresource.Version,
+				Kind:    s.Subresource.Kind,
+			}
+			if gvk == subgvk {
+				gvk = schema.GroupVersionKind{
+					Group:   s.ParentResource.Group,
+					Version: s.ParentResource.Version,
+					Kind:    s.ParentResource.Kind,
+				}
+				parts := strings.Split(s.Subresource.Name, "/")
+				subresource = parts[1]
+			}
+		}
+	}
+	responses := make([]engineapi.EngineResponse, 0, len(p.Policies))
+	for _, policy := range p.Policies {
+		if !policyHasValidateRules(policy) {
+			continue
+		}
+		policyContext, err := p.makePolicyContext(jp, cfg, resource, policy, namespaceLabels, gvk, subresource)
+		if err != nil {
+			return responses, err
+		}
+		validateResponse := eng.Validate(context.Background(), policyContext)
+		responses = append(responses, validateResponse)
+	}
+	if p.Rc != nil {
+		p.Rc.addEngineResponses(p.AuditWarn, responses...)
+	}
+	return responses, nil
+}
+
 func (p *PolicyProcessor) makePolicyContext(
 	jp jmespath.Interface,
 	cfg config.Configuration,
